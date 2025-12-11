@@ -44,12 +44,26 @@ app.use(express.json());
 // Mount routes
 app.use('/', routes);
 
-// Error handling middleware
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({
+// 404 handler for unmatched routes
+app.use((req, res, next) => {
+  return res.status(404).json({
+    statusCode: 404,
     status: 'error',
-    message: 'Internal Server Error',
+    message: 'Resource not found',
+  });
+});
+
+// Error handling middleware (must have 4 args)
+app.use((err, req, res, next) => {
+  const statusCode = err.statusCode && Number.isInteger(err.statusCode) ? err.statusCode : 500;
+  const message = err.message || 'Internal Server Error';
+  if (process.env.NODE_ENV !== 'test') {
+    console.error(err.stack || err);
+  }
+  return res.status(statusCode).json({
+    statusCode,
+    status: 'error',
+    message,
   });
 });
 
